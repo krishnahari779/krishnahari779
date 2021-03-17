@@ -1,0 +1,229 @@
+clc;
+clear all; 
+close all;
+%% encrypted binary file read 
+fp=fopen("19JA2018SASHT1U1.r5","r")        %%%  opening .R file
+% position = ftell(fp)                         %%% pointer indicator  
+
+%% reading in the file following data
+radartype = fread(fp,1,"int16");   %%% frequency and radar name 
+ 
+baudlength = fread(fp,1,"int16"); %%% Baud length  transmission
+ 
+nrgb = fread(fp,1,"int16"); %%%  No. of Range bins
+ 
+nfft = fread(fp,1,"int16");   %%% No. of FFT points
+ 
+ncoh = fread(fp,1,"int16");     %%% No. of Coherent integrations
+ 
+nicoh = fread(fp,1,"int16");  %%% No. of Incoherent integrations
+ 
+ipp = fread(fp,1,"int16");   %%% Inter Pulse width in micro seconds 
+ 
+pwd = fread(fp,1,"int16");     %% pulse with micro sec
+ 
+codeflag = fread(fp,1,"int16");      %%% Code flag
+ 
+nwin = fread(fp,1,"int16");          %%% No. of observation windows
+ 
+w1start = fread(fp,1,"int16");      %%% Window1 start
+ 
+w1len = fread(fp,1,"int16");        %%% Window1 length
+ 
+w2start = fread(fp,1,"int16");      %%%  Window2 start not used
+ 
+w2len = fread(fp,1,"int16");         %%% Window2 length not used
+ 
+year = fread(fp,1,"int16");         %%% Year
+ 
+month = fread(fp,1,"int16");       %%%  Month
+ 
+day = fread(fp,1,"int16");        %%% Day
+ 
+hour = fread(fp,1,"int16");        %%% Hour
+ 
+min = fread(fp,1,"int16");        %%% Minute
+sec = fread(fp,1,"int16");         %%% Seconds
+ 
+nbeams = fread(fp,1,"int16");      %%%  No of beams in a beam scan cycle
+ 
+   %% directly moving to the data pointer in data of frame 1 channel 1 IQ data
+
+       %% Number of bytes to move from origin, specified as an integer
+
+        %% The value of offset can be positive, negative, or zero.
+                     fseek(fp,128,"bof"); %% beginning  of the IQ data file
+        %   k1= ftell(fp)               %%% pointer indicator
+
+%% time dividing in nfft and height divided in the (KM)
+    timeticks = (0:nfft-1)*ipp*10^-6*ncoh;
+            start_height = w1start*0.15;    %% window starting height
+        heightticks = start_height +(0:nrgb-1)*baudlength*0.15;  %%height at each time inter well
+
+%% IQ DATA of the all channel 
+
+    %% channel CH1 IQ data 
+  idata1 =[];             %% empty idata1 matrix  
+  qdata1 = [];             %% empty qdata2 matrix
+ 
+for rgb1=1:nrgb             %% idata1 reading matrix 
+    idata1(rgb1,:) =fread(fp,nfft,"float") 
+end
+ 
+    for rgb1=1:nrgb            %% qdata1 reading matrix 
+       qdata1(rgb1,:) = fread(fp,nfft,"float")
+    end
+
+                 %% PLOT THE CH-1 IQ-DATA
+   figure(1)
+   m1=[];   %% empty matrix m1
+   m2=[];   %% empty matrix m2
+    for rgb1=1:nrgb 
+         He1 = heightticks(rgb1)    %% height ticks are multiplied with each range bin1
+ k1 = He1 + 0.5*(idata1(rgb1,:)./max(idata1(rgb1,:))) %% normalization of i data the each height place the matrix form
+ m1=[m1;k1];          %% k1 matrix are place the m1 matrix
+plot(timeticks,He1 +0.5*(idata1(rgb1,:)./max(idata1(rgb1,:))))% plot the respected time signals and  normalized I data height signals
+   hold on;
+k2 = He1 + 0.5*(qdata1(rgb1,:)./max(qdata1(rgb1,:))) %% normalization of q data the each height place the matrix form
+      m2=[m2;k2];  %% k2 matrix are place the m2 matrix
+ plot(timeticks,He1 + 0.5*(qdata1(rgb1,:)./max(qdata1(rgb1,:)))) %% plot the time inter wells and k2 matrix of normalized q data 
+  grid on   
+title([ 'channel 1 IQ' 'Date',num2str(year) '-',num2str(month), '-',num2str(day),'Time:' ,num2str(hour) ':', num2str(min) ':' ,num2str(sec)]);
+ %%%    title and date time displayed in the plot 
+xlabel('’timestics *NFFT sample siginal value’')   %% x axis label
+ylabel('heightstics *nrgbs in (KM)');   % y axis label
+axis([0 1 85 145]); %% plotted image in the following axis
+    end
+
+                     %% CH-2 IQ-DATA
+    idata2 =[];             %% empty idata2 matrix  
+     qdata2 = [];             %% empty qdata2 matrix
+for rgb2=1:nrgb        %% idata2 reading matrix
+    idata2(rgb2,:) =fread(fp,nfft,"float") 
+end
+    for rgb2=1:nrgb           %% qdata2 reading matrix
+       qdata2(rgb2,:) = fread(fp,nfft,"float")
+    end
+
+                     %% PLOT THE CH-2 IQ-DATA
+    figure(2)
+      m3=[];
+   m4=[];
+    for rgb2=1:nrgb    
+          He2 = heightticks(rgb2)  %% height ticks are multiplied with each range bin2 
+ k3 = He2 + 0.5*(idata2(rgb2,:)./max(idata2(rgb2,:)))  %% normalization of idata2 the each height place the matrix form
+ m3=[m3;k3];
+ plot(timeticks, He2 + 0.5*(idata2(rgb2,:)./max(idata2(rgb2,:)))) %%plot the time inter wells and k3 matrix of normalized idata2
+   hold on;
+     k4 = He2 + 0.5*(qdata2(rgb2,:)./max(qdata2(rgb2,:))) %% normalization of qdata2 the each height place the matrix form
+      m4=[m4;k4];
+    plot(timeticks,He2 + 0.5*(qdata2(rgb2,:)./max(qdata2(rgb2,:)))) %% plot the time inter wells and k4 matrix of normalized qdata2
+   grid on
+hold on
+title([ 'channel 2 IQ' 'Date',num2str(year) '-',num2str(month), '-',num2str(day),'Time:' ,num2str(hour) ':', num2str(min) ':' ,num2str(sec)]);
+xlabel('’timestics *NFFT sample siginal value’')
+ylabel('heightstics *nrgbs in (KM)');
+axis([0 1 85 145]);   
+    end
+
+             %% channel 3 
+  idata3 =[];
+  qdata3 =[];
+for rgb3=1:nrgb
+    idata3(rgb3,:) =fread(fp,nfft,"float") 
+end
+    for rgb3=1:nrgb
+       qdata3(rgb3,:) = fread(fp,nfft,"float")
+    end
+
+                         %% PLOT THE CH-3 IQ-DATA
+    figure(3)
+   m5=[];
+   m6=[];
+    for rgb3=1:nrgb     
+          He3 = heightticks(rgb3)
+ k5 = He3 + 0.5*(idata3(rgb3,:)./max(idata3(rgb3,:)))
+ m5=[m5;k5];
+ plot(timeticks,He3 + 0.5*(idata3(rgb3,:)./max(idata3(rgb3,:))))
+   hold on;
+     k6 = He3 + 0.5*(qdata3(rgb3,:)./max(qdata3(rgb3,:)))
+      m6=[m6;k6];
+    plot(timeticks,He3 + 0.5*(qdata3(rgb3,:)./max(qdata3(rgb3,:))))
+   grid on
+hold on
+title([ 'channel 3 IQ' 'Date',num2str(year) '-',num2str(month), '-',num2str(day),'Time:' ,num2str(hour) ':', num2str(min) ':' ,num2str(sec)]);
+xlabel('’timestics *NFFT sample siginal value’')
+ylabel('heightstics *nrgbs in (KM)');
+axis([0 1 85 145]);
+    end
+
+              %% channel 4
+    idata4 =[];
+    qdata4 = [];
+for rgb4=1:nrgb
+    idata4(rgb4,:) =fread(fp,nfft,"float") 
+end
+    for rgb4=1:nrgb
+       qdata4(rgb4,:) = fread(fp,nfft,"float")
+    end
+
+                         %% PLOT THE CH-4 IQ-DATA
+   figure(4)
+   m7=[];
+   m8=[];
+    for rgb4=1:nrgb    
+          He4 = heightticks(rgb4)
+    k7 = He4 + 0.5*(idata4(rgb4,:)./max(idata4(rgb4,:)))
+      m7=[m7;k7];
+      plot(timeticks,He4+0.5*(idata4(rgb4,:)./max(idata4(rgb4,:))))
+   hold on;
+     k8 = He4 + 0.5*(qdata4(rgb4,:)./max(qdata4(rgb4,:)))
+        m8=[m8;k8];
+    plot(timeticks,He4 + 0.5*(qdata4(rgb4,:)./max(qdata4(rgb4,:))))
+   grid on
+hold on
+title([ 'channel 4 IQ' 'Date',num2str(year) '-',num2str(month), '-',num2str(day),'Time:' ,num2str(hour) ':', num2str(min) ':' ,num2str(sec)]);
+xlabel('’timestics *NFFT sample siginal value’')
+ylabel('heightstics *nrgbs in (KM)');
+axis([0 1 85 145]);
+    end  
+
+                   %% channel 5 
+  idata5 =[];
+  qdata5 = [];
+for rgb5=1:nrgb
+    idata5(rgb5,:) =fread(fp,nfft,"float") 
+end
+    for rgb5=1:nrgb
+     qdata5(rgb5,:) = fread(fp,nfft,"float")
+    end
+
+                         %% PLOT THE CH-5 IQ-DATA
+    figure(5)
+    m9=[];
+   m10=[];
+    for rgb5=1:nrgb  
+     He5 = heightticks(rgb5)
+ k9 = He5 + 0.5*(idata5(rgb5,:)./max(idata5(rgb5,:)))
+     m9=[m9;k9];
+ plot(timeticks,He5 + 0.5*(idata5(rgb5,:)./max(idata5(rgb5,:))))
+  hold on;
+   k10 = He1 + 0.5*(qdata5(rgb5,:)./max(qdata5(rgb5,:)))
+           m10=[m10;k10];
+    plot(timeticks,He5 + 0.5*(qdata5(rgb5,:)./max(qdata5(rgb5,:))))
+   grid on
+hold on
+title([ 'channel 5 IQ' 'Date',num2str(year) '-',num2str(month), '-',num2str(day),'Time:' ,num2str(hour) ':', num2str(min) ':' ,num2str(sec)]);
+xlabel('’timestics *NFFT sample siginal value’')
+ylabel('heightstics *nrgbs in (KM)');
+axis([0 1 85 145]);
+    end  
+
+    %% s(t) generation    %%   
+    fseek(fp,128,"eof")  %%  ENDING THE FILE POINTER
+    fclose(fp)  %% CLOSE THE  . R FILE  
+    %% matrix formations
+    st1=[timeticks;m1;m3;m5;m7;m9] ; %%%  total I data
+    st2=[timeticks;m2;m4;m6;m8;m10] ;  %%% total  Q data 
+    
+    %% 
