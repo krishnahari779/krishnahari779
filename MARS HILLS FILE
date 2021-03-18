@@ -1,0 +1,75 @@
+% t = Tiff('Mars_Perseverance_RRR_0000_0666952977_663ECM_T0010044AUT_04096_00_2I3J01 (1)','r');
+% imageData = read(t)
+%   A = imread('mars1.jpg');
+%%  
+clc;
+clear all;
+close all;
+X1 = imread('filename1.png', 'png');
+X2= imread('filename2.png', 'png');
+figure(1);
+subplot(1,2,1);imshow(X1);title('mars 1 orginal image');
+subplot(1,2,2);imshow(X2);title('mars 2 orginal image');
+%% v(f) vector formation 
+T1=fft(X1);
+T2=fft(X2);
+figure(2);
+subplot(1,2,1);imshow(T1);title('mars 1 fft orginal image');
+subplot(1,2,2);imshow(T2);title('mars 2 fft orginal image');
+%% 
+se = strel('disk',1);
+afterOpening = imopen(X1,se);
+figure(3)
+imshow(afterOpening,[]);
+%% 
+%% v(f) vector formation 
+% %%
+% % % I = imread('cell.tif');
+% I= imread('filename1.png', 'png')
+% figure(10)
+% imshow(I)
+%  title('Original Image');
+% % fudgeFactor = 0.5;
+% % threshold=0.4;
+% BWs = edge(I,'sobel');
+% figure(11)
+% imshow(BWs)
+% title('Binary Gradient Mask')
+%%
+I=X1
+claheI = adapthisteq(I,'NumTiles',[10 10]);
+claheI = imadjust(claheI);
+imshow(claheI)
+
+radius_range = 0:22;
+intensity_area = zeros(size(radius_range));
+for counter = radius_range
+    remain = imopen(claheI, strel('disk', counter));
+    intensity_area(counter + 1) = sum(remain(:));  
+end
+figure(12)
+plot(intensity_area, 'm - *')
+grid on
+title('Sum of pixel values in opened image versus radius')
+xlabel('radius of opening (pixels)')
+ylabel('pixel value sum of opened objects (intensity)')
+
+intensity_area_prime = diff(intensity_area);
+plot(intensity_area_prime, 'm - *')
+grid on
+title('Granulometry (Size Distribution) of Snowflakes')
+ax = gca;
+ax.XTick = [0 2 4 6 8 10 12 14 16 18 20 22];
+xlabel('radius of snowflakes (pixels)')
+ylabel('Sum of pixel values in snowflakes as a function of radius')
+
+open5 = imopen(claheI,strel('disk',5));
+open6 = imopen(claheI,strel('disk',6));
+rad5 = imsubtract(open5,open6);
+figure(13)
+imshow(rad5,[])
+
+
+%% 
+
+
